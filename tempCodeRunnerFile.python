@@ -57,6 +57,7 @@ class Sudoku:
             self.board[row][col] = 0
 
         self.reset_timer() #reset the timer when generating a new board
+        self.chances = 3 #Reset the chances counter
 
     def draw_timer(self):
         timer_text = FONT.render(f"Time: {self.timer // 60:02}:{self.timer % 60:02}", True, BLACK)
@@ -65,6 +66,12 @@ class Sudoku:
     
     def reset_timer(self):
         self.timer = 480  # Reset the timer to 8 minutes in seconds
+    
+    def draw_chances(self):
+        chance_text = FONT.render(f"Chances left: {self.chances}/3", True, BLACK)
+        chance_text_rect = chance_text.get_rect(bottomright=(WINDOW_SIZE[0] - 20, WINDOW_SIZE[1] - 60))  # Adjusted position
+        WIN.blit(chance_text, chance_text_rect)
+
 
     def draw_board(self):
         # Draw main box boundaries
@@ -142,18 +149,18 @@ class Sudoku:
                     rect = pygame.Rect(col * (BOARD_SIZE // 9), row * (BOARD_SIZE // 9), BOARD_SIZE // 9, BOARD_SIZE // 9)
                     pygame.draw.rect(WIN, RED, rect, 3)
                     pygame.display.update()
-                    pygame.time.delay(500)  # Delay to show the incorrect input
+                    #pygame.time.delay(500)  # Delay to show the incorrect input
                     self.chances -= 1  # Decrement chances on invalid input
                     if self.chances == 0:
                         print("No more chances left. Generating new game board...")
                         self.generate_board()  # Generate new game board
-                        self.chances = 3  # Reset chances counter
+                        
             else:
                 # Highlight the cell with red color if the number is not valid
                 rect = pygame.Rect(col * (BOARD_SIZE // 9), row * (BOARD_SIZE // 9), BOARD_SIZE // 9, BOARD_SIZE // 9)
                 pygame.draw.rect(WIN, RED, rect, 3)
                 pygame.display.update()
-                pygame.time.delay(500)  # Delay to show the incorrect input
+               # pygame.time.delay(500)  # Delay to show the incorrect input
 
     def is_valid_move(self, row, col, number):
         # Check if the number can be placed in the given row and column
@@ -222,6 +229,7 @@ def main():
         sudoku.draw_board()
         sudoku.draw_selected_cell()
         sudoku.draw_timer()  # Draw the timer
+        sudoku.draw_chances()
         sudoku.update_timer()  # Update the timer
         pygame.display.update()
 
