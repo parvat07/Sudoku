@@ -24,14 +24,14 @@ class Sudoku:
     def __init__(self):
         self.board = [[0] * 9 for _ in range(9)]
         self.selected = None  # Placeholder for selected cell
-     # Adjusting the sides of the buttons to place them in the right corner
-        self.start_button = pygame.Rect(WINDOW_SIZE[0] - 140, 20, 120, 40)
-        self.easy_button = pygame.Rect(WINDOW_SIZE[0] - 140, 80, 120, 40)
-        self.medium_button = pygame.Rect(WINDOW_SIZE[0] - 140, 140, 120, 40)
-        self.hard_button = pygame.Rect(WINDOW_SIZE[0] - 140, 200, 120, 40)
-        self.quit_button = pygame.Rect(WINDOW_SIZE[0] - 140, 260, 120, 40)
+        self.buttons = {
+            "start": pygame.Rect(WINDOW_SIZE[0] - 140, 20, 120, 40),
+            "easy": pygame.Rect(WINDOW_SIZE[0] - 140, 80, 120, 40),
+            "medium": pygame.Rect(WINDOW_SIZE[0] - 140, 140, 120, 40),
+            "hard": pygame.Rect(WINDOW_SIZE[0] - 140, 200, 120, 40),
+            "quit": pygame.Rect(WINDOW_SIZE[0] - 140, 260, 120, 40)
+        }
         self.timer = 480 # 8min in seconds
-        
         self.chances = 3
         self.difficulty = "easy"
 
@@ -43,15 +43,11 @@ class Sudoku:
                 self.board[i][j] = random.randint(1, 9)
 
         # Set the number of empty cells based on the selected difficulty level
-        if self.difficulty == "easy":
-            empty_cells = 40
-        elif self.difficulty == "medium":
-            empty_cells = 50
-        elif self.difficulty == "hard":
-            empty_cells = 60
+        empty_cells = {"easy": 40, "medium": 50, "hard": 60}
+        empty_cells_count = empty_cells[self.difficulty]
 
         # Randomly remove some numbers to create a puzzle
-        for _ in range(empty_cells):
+        for _ in range(empty_cells_count):
             row = random.randint(0, 8)
             col = random.randint(0, 8)
             self.board[row][col] = 0
@@ -72,7 +68,6 @@ class Sudoku:
         chance_text_rect = chance_text.get_rect(bottomright=(WINDOW_SIZE[0] - 20, WINDOW_SIZE[1] - 60))  # Adjusted position
         WIN.blit(chance_text, chance_text_rect)
 
-
     def draw_board(self):
         # Draw main box boundaries
         for i in range(1, 3):
@@ -90,29 +85,14 @@ class Sudoku:
                     WIN.blit(text_surface, text_rect)
 
         # Draw buttons for new game, difficulty levels, and quit on the right side
-        pygame.draw.rect(WIN, GRAY, self.start_button)
-        pygame.draw.rect(WIN, GRAY, self.easy_button)
-        pygame.draw.rect(WIN, GRAY, self.medium_button)
-        pygame.draw.rect(WIN, GRAY, self.hard_button)
-        pygame.draw.rect(WIN, GRAY, self.quit_button)
+        for button in self.buttons.values():
+            pygame.draw.rect(WIN, GRAY, button)
 
-        start_text = FONT.render("Start", True, BLACK)
-        easy_text = FONT.render("Easy", True, BLACK)
-        medium_text = FONT.render("Medium", True, BLACK)
-        hard_text = FONT.render("Hard", True, BLACK)
-        quit_text = FONT.render("Quit", True, BLACK)
-
-        start_text_rect = start_text.get_rect(center=self.start_button.center)
-        easy_text_rect = easy_text.get_rect(center=self.easy_button.center)
-        medium_text_rect = medium_text.get_rect(center=self.medium_button.center)
-        hard_text_rect = hard_text.get_rect(center=self.hard_button.center)
-        quit_text_rect = quit_text.get_rect(center=self.quit_button.center)
-
-        WIN.blit(start_text, start_text_rect)
-        WIN.blit(easy_text, easy_text_rect)
-        WIN.blit(medium_text, medium_text_rect)
-        WIN.blit(hard_text, hard_text_rect)
-        WIN.blit(quit_text, quit_text_rect)
+        button_texts = {"start": "Start", "easy": "Easy", "medium": "Medium", "hard": "Hard", "quit": "Quit"}
+        for button_name, button_rect in self.buttons.items():
+            button_text = FONT.render(button_texts[button_name], True, BLACK)
+            button_text_rect = button_text.get_rect(center=button_rect.center)
+            WIN.blit(button_text, button_text_rect)
 
     def draw_selected_cell(self):
         if self.selected:
@@ -145,22 +125,12 @@ class Sudoku:
                 if self.is_valid_move(row, col, number):
                     self.board[row][col] = number
                 else:
-                    # Highlight the cell with red color if the number is not valid
-                    rect = pygame.Rect(col * (BOARD_SIZE // 9), row * (BOARD_SIZE // 9), BOARD_SIZE // 9, BOARD_SIZE // 9)
-                    pygame.draw.rect(WIN, RED, rect, 3)
-                    pygame.display.update()
-                    #pygame.time.delay(500)  # Delay to show the incorrect input
                     self.chances -= 1  # Decrement chances on invalid input
                     if self.chances == 0:
                         print("No more chances left. Generating new game board...")
                         self.generate_board()  # Generate new game board
-                        
             else:
-                # Highlight the cell with red color if the number is not valid
-                rect = pygame.Rect(col * (BOARD_SIZE // 9), row * (BOARD_SIZE // 9), BOARD_SIZE // 9, BOARD_SIZE // 9)
-                pygame.draw.rect(WIN, RED, rect, 3)
-                pygame.display.update()
-               # pygame.time.delay(500)  # Delay to show the incorrect input
+                self.chances -= 1  # Decrement chances on invalid input
 
     def is_valid_move(self, row, col, number):
         # Check if the number can be placed in the given row and column
@@ -200,30 +170,31 @@ def main():
                 sudoku.selected = sudoku.get_clicked_cell(pos)
                 if sudoku.selected:
                     print("Selected cell:", sudoku.selected)
-                if sudoku.start_button.collidepoint(pos):
-                    print("Start button clicked")
-                    sudoku.generate_board()  # Generate new game board
-                    sudoku.reset_timer()  # Reset the timer
-                elif sudoku.easy_button.collidepoint(pos):
-                    print("Easy button clicked")
-                    sudoku.set_difficulty("easy")
-                    sudoku.reset_timer()  # Reset the timer
-                elif sudoku.medium_button.collidepoint(pos):
-                    print("Medium button clicked")
-                    sudoku.set_difficulty("medium")
-                    sudoku.reset_timer()  # Reset the timer
-                elif sudoku.hard_button.collidepoint(pos):
-                    print("Hard button clicked")
-                    sudoku.set_difficulty("hard")
-                    sudoku.reset_timer()  # Reset the timer
-                elif sudoku.quit_button.collidepoint(pos):
-                    print("Quit button clicked")
-                    pygame.quit()
-                    sys.exit()
+                for button_name, button_rect in sudoku.buttons.items():
+                    if button_rect.collidepoint(pos):
+                        if button_name == "start":
+                            print("Start button clicked")
+                            sudoku.generate_board()  # Generate new game board
+                            sudoku.reset_timer()  # Reset the timer
+                        elif button_name == "easy":
+                            print("Easy button clicked")
+                            sudoku.set_difficulty("easy")
+                            sudoku.reset_timer()  # Reset the timer
+                        elif button_name == "medium":
+                            print("Medium button clicked")
+                            sudoku.set_difficulty("medium")
+                            sudoku.reset_timer()  # Reset the timer
+                        elif button_name == "hard":
+                            print("Hard button clicked")
+                            sudoku.set_difficulty("hard")
+                            sudoku.reset_timer()  # Reset the timer
+                        elif button_name == "quit":
+                            print("Quit button clicked")
+                            pygame.quit()
+                            sys.exit()
             elif event.type == pygame.KEYDOWN:
                 if pygame.K_1 <= event.key <= pygame.K_9:
                     sudoku.input_number(event.key - pygame.K_0)
-
 
         WIN.fill(WHITE)
         sudoku.draw_board()
