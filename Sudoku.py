@@ -29,10 +29,12 @@ class Sudoku:
             "easy": pygame.Rect(WINDOW_SIZE[0] - 140, 80, 120, 40),
             "medium": pygame.Rect(WINDOW_SIZE[0] - 140, 140, 120, 40),
             "hard": pygame.Rect(WINDOW_SIZE[0] - 140, 200, 120, 40),
-            "quit": pygame.Rect(WINDOW_SIZE[0] - 140, 260, 120, 40)
+            "quit": pygame.Rect(WINDOW_SIZE[0] - 140, 260, 120, 40),
+            "solve":pygame.Rect(WINDOW_SIZE[0] - 140, 320, 120, 40)
         }
+
         self.timer = 480 # 8min in seconds
-        self.chances = 3
+        self.chances = 3 
         self.difficulty = "easy"
 
     def generate_board(self):
@@ -122,7 +124,7 @@ class Sudoku:
         for button in self.buttons.values():
             pygame.draw.rect(WIN, GRAY, button)
 
-            button_texts = {"start": "Start", "easy": "Easy", "medium": "Medium", "hard": "Hard", "quit": "Quit"}
+            button_texts = {"start": "Start", "easy": "Easy", "medium": "Medium", "hard": "Hard", "quit": "Quit", "solve": "Solve"}
         for button_name, button_rect in self.buttons.items():
             button_text = FONT.render(button_texts[button_name], True, BLACK)
             button_text_rect = button_text.get_rect(center=button_rect.center)
@@ -226,6 +228,9 @@ def main():
                             print("Quit button clicked")
                             pygame.quit()
                             sys.exit()
+                        elif button_name == "solve":
+                            print("Solve button clicked") 
+                            
             elif event.type == pygame.KEYDOWN:
                 if pygame.K_1 <= event.key <= pygame.K_9:
                     sudoku.input_number(event.key - pygame.K_0)
@@ -238,5 +243,5 @@ def main():
         sudoku.update_timer()  # Update the timer
         pygame.display.update()
 
-if __name__ == "__main__":
+if __name__ == "__main__":          
     main()
