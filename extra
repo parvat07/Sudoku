@@ -81,6 +81,8 @@ def main():
     sudoku.generate_board()
 
     while True:
+        start_time = time.time()
+
         sudoku.display_board()
         print(f"Time: {sudoku.timer // 60:02}:{sudoku.timer % 60:02}")
         print(f"Chances left: {sudoku.chances}/3")
@@ -91,6 +93,9 @@ def main():
 
         sudoku.input_number(row, col, number)
         sudoku.update_timer()
+
+        elapsed_time = time.time() - start_time
+        sudoku.timer -= int(elapsed_time)
 
 if __name__ == "__main__":
     main()
