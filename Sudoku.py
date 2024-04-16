@@ -13,7 +13,7 @@ RED = (255, 0, 0)
 
 # Set up window
 BOARD_SIZE = 500  # Size of the game board
-WINDOW_SIZE = ( 1080, 720)  # Double the width for buttons on the right
+WINDOW_SIZE = (1080, 720)  # Double the width for buttons on the right
 WIN = pygame.display.set_mode(WINDOW_SIZE)
 pygame.display.set_caption("Sudoku")
 
@@ -30,15 +30,18 @@ class Sudoku:
             "medium": pygame.Rect(WINDOW_SIZE[0] - 140, 140, 120, 40),
             "hard": pygame.Rect(WINDOW_SIZE[0] - 140, 200, 120, 40),
             "quit": pygame.Rect(WINDOW_SIZE[0] - 140, 260, 120, 40),
-            "solve":pygame.Rect(WINDOW_SIZE[0] - 140, 320, 120, 40)
+            "solve": pygame.Rect(WINDOW_SIZE[0] - 140, 320, 120, 40),
+            "undo": pygame.Rect(WINDOW_SIZE[0] - 140, 380, 120, 40)  # Added undo button
         }
 
-        self.timer = 480 # 8min in seconds
-        self.chances = 3 
+        self.timer = 480  # 8min in seconds
+        self.chances = 3
         self.difficulty = "easy"
         self.start_time = pygame.time.get_ticks()
-        
-        
+
+        # Stack to store previous board states for undo functionality
+        self.undo_stack = []
+
     def solve_sudoku(self):
         # Helper function to solve Sudoku using backtracking
         def is_valid(row, col, num):
@@ -68,12 +71,11 @@ class Sudoku:
             return True
 
         solve()
-       
-        
+
     def is_solvable(self):
         # Create a copy of the board
         temp_board = [row[:] for row in self.board]
-        
+
         def is_valid(row, col, num):
             # Check if the number can be placed in the given position
             for i in range(9):
@@ -103,13 +105,11 @@ class Sudoku:
         return solve()
 
     def generate_board(self):
-        
-         
         # Generate a solved Sudoku board
         self.solve_sudoku()
 
         # Set the number of empty cells based on the selected difficulty level
-        empty_cells = {"easy": 40, "medium": 50, "hard": 60}
+        empty_cells = {"easy": 40, "medium": 50, "hard": 70}
         empty_cells_count = empty_cells[self.difficulty]
 
         # Randomly remove some numbers to create a puzzle
@@ -132,40 +132,43 @@ class Sudoku:
         self.reset_timer()  # reset the timer when generating a new board
         self.chances = 3  # Reset the chances counter
 
+        # Clear undo stack when generating a new board
+        self.undo_stack.clear()
+
     def draw_timer(self):
         elapsed_time = (pygame.time.get_ticks() - self.start_time) // 1000  # Convert milliseconds to seconds
         remaining_time = max(0, self.timer - elapsed_time)  # Calculate remaining time
         timer_text = FONT.render(f"Time: {remaining_time // 60:02}:{remaining_time % 60:02}", True, BLACK)
         timer_text_rect = timer_text.get_rect(bottomright=(WINDOW_SIZE[0] - 20, WINDOW_SIZE[1] - 20))
         WIN.blit(timer_text, timer_text_rect)
-    
+
     def reset_timer(self):
-        self.start_time = pygame.time.get_ticks() # Reset the timer to 8 minutes in seconds
-    
+        self.start_time = pygame.time.get_ticks()  # Reset the timer to 8 minutes in seconds
+
     def draw_chances(self):
         chance_text = FONT.render(f"Chances left: {self.chances}/3", True, BLACK)
         chance_text_rect = chance_text.get_rect(bottomright=(WINDOW_SIZE[0] - 20, WINDOW_SIZE[1] - 60))  # Adjusted position
         WIN.blit(chance_text, chance_text_rect)
-    
+
     def draw_instructions(self):
-        
+
         instruction_font = pygame.font.SysFont(None, 25)
-        
+
         instructions = [
             "Instructions:",
             "1. Click on a cell to select it.",
             "2. Press a number key to input a value.",
-            "3. Use the buttons on the right to start a game, select difficulty, solve or quit.",
+            "3. Use the buttons on the right to start a game, select difficulty, solve, undo, or quit.",
             "4. When Solve buttons is clicked it will show the answer(need to wait 7 sec for new game)",
             "5. You have three chances to input an incorrect number (only correct number will be shown)."
-         ]
+        ]
         instruction_y = WINDOW_SIZE[1] - len(instructions) * 26 - 10  # Align with bottom of window
         for instruction in instructions:
             text_surface = instruction_font.render(instruction, True, RED)
             text_rect = text_surface.get_rect(bottomleft=(10, instruction_y))
             WIN.blit(text_surface, text_rect)
-            instruction_y += 30 # Increase Y-coordinate for the next instruction
-    
+            instruction_y += 30  # Increase Y-coordinate for the next instruction
+
     def draw_board(self):
 
         self.draw_instructions()
@@ -179,35 +182,36 @@ class Sudoku:
             for j in range(9):
                 rect = pygame.Rect(j * (BOARD_SIZE // 9), i * (BOARD_SIZE // 9), BOARD_SIZE // 9, BOARD_SIZE // 9)
                 pygame.draw.rect(WIN, WHITE, rect, 1)
-                
+
                 if self.board[i][j] != 0:
                     text_surface = FONT.render(str(self.board[i][j]), True, BLACK)
                     text_rect = text_surface.get_rect(center=rect.center)
                     WIN.blit(text_surface, text_rect)
 
-    # Draw horizontal lines for each row
+        # Draw horizontal lines for each row
         for i in range(1, 9):
             pygame.draw.line(WIN, GRAY, (0, i * (BOARD_SIZE // 9)), (BOARD_SIZE, i * (BOARD_SIZE // 9)), 1)
 
-    # Draw vertical lines for each column
+        # Draw vertical lines for each column
         for j in range(1, 9):
             pygame.draw.line(WIN, GRAY, (j * (BOARD_SIZE // 9), 0), (j * (BOARD_SIZE // 9), BOARD_SIZE), 1)
 
-    # Draw the top border line
-            pygame.draw.line(WIN, BLACK, (0, 0), (BOARD_SIZE, 0), 3)
-    # Draw the bottom border line
-            pygame.draw.line(WIN, BLACK, (0, BOARD_SIZE), (BOARD_SIZE, BOARD_SIZE), 3)
-    # Draw the left border line
-            pygame.draw.line(WIN, BLACK, (0, 0), (0, BOARD_SIZE), 3)
-    # Draw the right border line
-            pygame.draw.line(WIN, BLACK, (BOARD_SIZE, 0), (BOARD_SIZE, BOARD_SIZE), 3)
+        # Draw the top border line
+        pygame.draw.line(WIN, BLACK, (0, 0), (BOARD_SIZE, 0), 3)
+        # Draw the bottom border line
+        pygame.draw.line(WIN, BLACK, (0, BOARD_SIZE), (BOARD_SIZE, BOARD_SIZE), 3)
+        # Draw the left border line
+        pygame.draw.line(WIN, BLACK, (0, 0), (0, BOARD_SIZE), 3)
+        # Draw the right border line
+        pygame.draw.line(WIN, BLACK, (BOARD_SIZE, 0), (BOARD_SIZE, BOARD_SIZE), 3)
         # Draw instructions
-       
-        # Draw buttons for new game, difficulty levels, and quit on the right side
+
+        # Draw buttons for new game, difficulty levels, undo, solve, and quit on the right side
         for button in self.buttons.values():
             pygame.draw.rect(WIN, GRAY, button)
 
-        button_texts = {"start": "Start", "easy": "Easy", "medium": "Medium", "hard": "Hard", "quit": "Quit", "solve": "Solve"}
+        button_texts = {"start": "Start", "easy": "Easy", "medium": "Medium", "hard": "Hard",
+                        "quit": "Quit", "solve": "Solve", "undo": "Undo"}
         for button_name, button_rect in self.buttons.items():
             button_text = FONT.render(button_texts[button_name], True, BLACK)
             button_text_rect = button_text.get_rect(center=button_rect.center)
@@ -215,7 +219,8 @@ class Sudoku:
 
     def draw_selected_cell(self):
         if self.selected:
-            rect = pygame.Rect(self.selected[1] * (BOARD_SIZE // 9), self.selected[0] * (BOARD_SIZE // 9), BOARD_SIZE // 9, BOARD_SIZE // 9)
+            rect = pygame.Rect(self.selected[1] * (BOARD_SIZE // 9), self.selected[0] * (BOARD_SIZE // 9),
+                               BOARD_SIZE // 9, BOARD_SIZE // 9)
             pygame.draw.rect(WIN, RED, rect, 3)
 
     def get_clicked_cell(self, pos):
@@ -228,13 +233,15 @@ class Sudoku:
     def set_difficulty(self, difficulty):
         self.difficulty = difficulty
         self.generate_board()
-       
+
     def input_number(self, number):
         if self.selected:
             row, col = self.selected
             if self.board[row][col] == 0:
                 if self.is_valid_move(row, col, number):
                     self.board[row][col] = number
+                    # Record the move for undo
+                    self.undo_stack.append([row, col, 0])  # '0' indicates the move was placing a number
                 else:
                     self.chances -= 1  # Decrement chances on invalid input
                     if self.chances == 0:
@@ -266,14 +273,20 @@ class Sudoku:
                 if self.board[start_row + i][start_col + j] == number:
                     return False
         return True
-    
+
     def is_puzzle_solved(self):
-    # Check if there are any empty cells (zeroes) remaining
+        # Check if there are any empty cells (zeroes) remaining
         for row in self.board:
             for cell in row:
                 if cell == 0:
                     return False
         return True
+
+    def undo_move(self):
+        if self.undo_stack:
+            row, col, operation = self.undo_stack.pop()
+            if operation == 0:  # If the move was placing a number
+                self.board[row][col] = 0
 
 def main():
     sudoku = Sudoku()
@@ -312,12 +325,12 @@ def main():
                             pygame.quit()
                             sys.exit()
                         elif button_name == "solve":
-                            print("Solve button clicked") 
+                            print("Solve button clicked")
                             sudoku.solve_sudoku()
-                            sudoku.draw_board() 
-
-
-                            
+                            sudoku.draw_board()
+                        elif button_name == "undo":
+                            print("Undo button clicked")
+                            sudoku.undo_move()
             elif event.type == pygame.KEYDOWN:
                 if pygame.K_1 <= event.key <= pygame.K_9:
                     sudoku.input_number(event.key - pygame.K_0)
@@ -327,9 +340,8 @@ def main():
         sudoku.draw_selected_cell()
         sudoku.draw_timer()  # Draw the timer
         sudoku.draw_chances()
-       
+
         pygame.display.update()
-        
 
         if sudoku.timer <= 0:
             print("Time's up! Generating new game board...")
@@ -340,7 +352,7 @@ def main():
         if sudoku.is_puzzle_solved():
             print("Congratulations! Puzzle solved. Generating new game board...7 sec more")
             start_time = pygame.time.get_ticks()
-            while pygame.time.get_ticks() - start_time <8000:
+            while pygame.time.get_ticks() - start_time < 8000:
                 pass
             sudoku.generate_board()
 
@@ -349,6 +361,5 @@ def main():
             sudoku.reset_timer()
             sudoku.chances = 3
 
-        
-if __name__ == "__main__":          
+if __name__ == "__main__":
     main()
