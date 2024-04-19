@@ -25,7 +25,7 @@ class Sudoku:
 
         # Initialize the Sudoku board
 
-        #self.board = [[0] * 9 for _ in range(9)] ## 9x9 grid initialized with 0s
+        self.board = [[0] * 9 for _ in range(9)] ## 9x9 grid initialized with 0s
         self.selected = None  # Placeholder for selected cell
         self.buttons = {
              
@@ -141,8 +141,6 @@ class Sudoku:
         # Generate a solved Sudoku board
         self.solve_sudoku()
 
-        #Shuffle rows and columns for variety
-        self.shuffle_rows_and_columns()
         
         # Set the number of empty cells based on the selected difficulty level
         empty_cells = {"easy": 40, "medium": 60, "hard": 80}
@@ -177,14 +175,6 @@ class Sudoku:
         self.chances = 3 
         self.undo_stack.clear()
 
-    def shuffle_rows_and_columns(self):
-        # Shuffle the numbers within each row and column to mix up the puzzle
-        for i in range(9):
-            random.shuffle(self.board[i])
-        self.board = list(map(list, zip(*self.board)))
-        for i in range(9):
-            random.shuffle(self.board[i])
-        self.board = list(map(list, zip(*self.board)))
     
     def draw_timer(self):
         elapsed_time = (pygame.time.get_ticks() - self.start_time) // 1000  # Convert milliseconds to seconds
