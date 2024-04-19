@@ -25,7 +25,7 @@ class Sudoku:
 
         # Initialize the Sudoku board
 
-        self.board = [[0] * 9 for _ in range(9)] ## 9x9 grid initialized with 0s
+        #self.board = [[0] * 9 for _ in range(9)] ## 9x9 grid initialized with 0s
         self.selected = None  # Placeholder for selected cell
         self.buttons = {
              
@@ -47,42 +47,46 @@ class Sudoku:
 
         # Stack to store previous board states for undo functionality
         self.undo_stack = []
-        self.messages = []
+        self.message = []
+       
 
     def solve_sudoku(self):
-        # Helper function to solve Sudoku using backtracking
+    # Helper function to solve Sudoku using backtracking
         def is_valid(row, col, num):
-            # Check if the number can be placed in the given position
+        # Check if the number can be placed in the given position
             for i in range(9):
-                if self.board[row][i] == num or self.board[i][col] == num:
+                if self.board[row][i] == num:
                     return False
-            
-            # Check 3x3 grid
+                if self.board[i][col] == num:
+                    return False
+        
+        # Check 3x3 grid
             start_row, start_col = (row // 3) * 3, (col // 3) * 3
             for i in range(3):
                 for j in range(3):
                     if self.board[start_row + i][start_col + j] == num:
                         return False
             return True
-         
-        # Backtracking algorithm to solve the Sudoku puzzle
+    
+    # Backtracking algorithm to solve the Sudoku puzzle
         def solve():
             for i in range(9):
                 for j in range(9):
                     # Find an empty cell
                     if self.board[i][j] == 0:
-                        # Try placing numbers 1-9
+                    # Try placing numbers 1-9
                         for num in range(1, 10):
                             if is_valid(i, j, num):
-                                # If placing 'num' is valid, try to solve recursively
+                            # If placing 'num' is valid, try to solve recursively
                                 self.board[i][j] = num
-                                if solve(): # Recur to solve the next cell
+                                if solve():  # Recur to solve the next cell
                                     return True
-                                # Backtrack if no solution found
+                            # Backtrack if no solution found
                                 self.board[i][j] = 0
                         return False
             return True
-        # Start solving the Sudoku puzzle
+    
+    # Start solving the Sudoku puzzle
         solve()
 
     def is_solvable(self):
@@ -94,7 +98,9 @@ class Sudoku:
         def is_valid(row, col, num):
             # Check row and column
             for i in range(9):
-                if temp_board[row][i] == num or temp_board[i][col] == num:
+                if temp_board[row][i] == num:
+                    return False
+                if temp_board[i][col]== num:
                     return False
             
             # Check 3x3 grid
@@ -288,10 +294,12 @@ class Sudoku:
                 else:
                     self.chances -= 1  # Decrement chances on invalid input
                     if self.chances == 0:
-                        self.add_message("No more chances left. Generating new game board...")
+                        self.add_message("No more chances left. Generating new game board...", duration = 2000)
                         self.generate_board()  # Generate new game board
+                        return
+                    self.add_message("Invalid move. Try again.", duration = 2000)
             else:
-                self.add_message("Cell already contains a number")
+                self.add_message("Cell already contains a number", duration = 2000)
 
     def is_valid_move(self, row, col, number):
         # Check if the number can be placed in the given row and column
@@ -333,15 +341,15 @@ class Sudoku:
     
     def add_message(self, message, duration):
         expiration_time = pygame.time.get_ticks() + duration  # Calculate expiration time
-        self.messages.append((message, expiration_time))  # Add message with expiration time
+        self.message.append((message, expiration_time))  # Add message with expiration time
 
     def draw_messages(self):
     # Draw messages on the screen
         message_font = pygame.font.SysFont(None, 30)
-        message_y = 20  # Starting Y-coordinate for the first message
+        message_y = 26  # Starting Y-coordinate for the first message
         current_time = pygame.time.get_ticks()
         updated_messages = []
-        for message_info in self.messages:
+        for message_info in self.message:
             message, expiration_time = message_info
             if expiration_time > current_time:
                 message_text = message_font.render(message, True, BLACK)
@@ -349,9 +357,14 @@ class Sudoku:
                 WIN.blit(message_text, message_rect)
                 message_y += message_rect.height + 10  # Increase Y-coordinate for the next message
                 updated_messages.append(message_info)
-        self.messages = updated_messages  # Update the messages list to remove expired messages
+        self.message = updated_messages  # Update the messages list to remove expired messages
 
-
+def blink_revealed_numbers(self):
+    for i, j in self.revealed_numbers:
+        cell_size = BOARD_SIZE // 9
+        rect = pygame.Rect(j * cell_size, i * cell_size, cell_size, cell_size)
+        pygame.draw.rect(WIN, WHITE, rect)  # Clear the cell
+        pygame.display.update(rect)  # Update only the cell
 
 
 def main():
@@ -374,8 +387,10 @@ def main():
 
 def handle_mouse_click(sudoku, pos):
     sudoku.selected = sudoku.get_clicked_cell(pos)
-    if sudoku.selected:
-        print("Selected cell:", sudoku.selected)
+    
+    # { if sudoku.selected:
+    #   print("Selected cell:", sudoku.selected)} used for debugging
+    
     for button_name, button_rect in sudoku.buttons.items():
         if button_rect.collidepoint(pos):
             handle_button_click(sudoku, button_name)
@@ -388,7 +403,7 @@ def handle_button_click(sudoku, button_name):
         sudoku.set_difficulty(button_name)
         sudoku.reset_timer()
     elif button_name == "quit":
-        print("Quit button clicked")
+                      # print("Quit button clicked")
         pygame.quit()
         sys.exit()
     elif button_name == "solve":
@@ -412,16 +427,21 @@ def update_display(sudoku):
 
 def handle_game_over(sudoku):
     if sudoku.timer <= 0:
-        sudoku.add_message("Time's up! Generating new game board...")
+        sudoku.add_message("Time's up! Generating new game board...", duration = 2000)
         sudoku.generate_board()
         sudoku.reset_timer()
 
     if sudoku.is_puzzle_solved():
-        sudoku.add_message("Congratulations! Puzzle solved. Generating new game board...", duration = 2000)
         
-        # Wait for 2 seconds before generating a new game board
-        pygame.time.delay(2000)
+        
+        sudoku.add_message("Congratulations! Puzzle solved. New Game Board Generating...",duration = 5000)
+        sudoku.draw_messages()
+        pygame.display.update()
+        pygame.time.delay(5000)
         sudoku.generate_board()
+        # Wait for 2 seconds before generating a new game board
+       
+       
         sudoku.reset_timer()
 
 if __name__ == "__main__":
