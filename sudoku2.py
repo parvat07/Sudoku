@@ -143,7 +143,7 @@ class Sudoku:
 
         
         # Set the number of empty cells based on the selected difficulty level
-        empty_cells = {"easy": 40, "medium": 60, "hard": 80}
+        empty_cells = {"easy": 20, "medium": 45, "hard": 65}
         empty_cells_count = empty_cells[self.difficulty]
 
         # Randomly remove some numbers to create a puzzle
@@ -307,13 +307,14 @@ class Sudoku:
         return number not in column
 
     def is_valid_subgrid(self, row, col, number):
-        # Check if the number is not already in the 3x3 subgrid
+    # Check if the number is not already in the 3x3 subgrid
         start_row, start_col = (row // 3) * 3, (col // 3) * 3
         for i in range(3):
             for j in range(3):
                 if self.board[start_row + i][start_col + j] == number:
                     return False
         return True
+
 
     def is_puzzle_solved(self):
         # Check if there are any empty cells (zeroes) remaining
@@ -336,26 +337,18 @@ class Sudoku:
     def draw_messages(self):
     # Draw messages on the screen
         message_font = pygame.font.SysFont(None, 30)
-        message_y = 26  # Starting Y-coordinate for the first message
+        message_y = 540  # Starting Y-coordinate for the first message
         current_time = pygame.time.get_ticks()
         updated_messages = []
         for message_info in self.message:
             message, expiration_time = message_info
             if expiration_time > current_time:
                 message_text = message_font.render(message, True, BLACK)
-                message_rect = message_text.get_rect(midtop=(WINDOW_SIZE[0] // 2, message_y))
+                message_rect = message_text.get_rect(center=(WINDOW_SIZE[0] // 2, message_y))
                 WIN.blit(message_text, message_rect)
                 message_y += message_rect.height + 10  # Increase Y-coordinate for the next message
                 updated_messages.append(message_info)
         self.message = updated_messages  # Update the messages list to remove expired messages
-
-def blink_revealed_numbers(self):
-    for i, j in self.revealed_numbers:
-        cell_size = BOARD_SIZE // 9
-        rect = pygame.Rect(j * cell_size, i * cell_size, cell_size, cell_size)
-        pygame.draw.rect(WIN, WHITE, rect)  # Clear the cell
-        pygame.display.update(rect)  # Update only the cell
-
 
 def main():
     sudoku = Sudoku()
@@ -416,23 +409,19 @@ def update_display(sudoku):
     pygame.display.update()
 
 def handle_game_over(sudoku):
-    if sudoku.timer <= 0:
-        sudoku.add_message("Time's up! Generating new game board...", duration = 2000)
-        sudoku.generate_board()
-        sudoku.reset_timer()
-
-    if sudoku.is_puzzle_solved():
+    if sudoku.timer <= 0 or sudoku.is_puzzle_solved():
+        if sudoku.timer <= 0:
+            message = "Time's up! Generating new game board..."
+        else:
+            message = "Congratulations! Puzzle solved. New Game Board Generating..."
         
-        
-        sudoku.add_message("Congratulations! Puzzle solved. New Game Board Generating...",duration = 5000)
+        sudoku.add_message(message, duration=2000 if sudoku.timer <= 0 else 5000)
         sudoku.draw_messages()
         pygame.display.update()
         pygame.time.delay(5000)
         sudoku.generate_board()
-        # Wait for 2 seconds before generating a new game board
-       
-       
         sudoku.reset_timer()
+
 
 if __name__ == "__main__":
     main()
